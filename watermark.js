@@ -30,9 +30,12 @@ const CONFIG = {
 
   // top-left | top-right | bottom-left | bottom-right | center
   position: 'top-right',
-  // Ukuran & margin dihitung dari SISI TERPENDEK video, jadi hasilnya
-  // konsisten di portrait maupun landscape (otomatis).
-  sizePercent: 30, // lebar watermark, % dari sisi terpendek video
+  // Ukuran & margin dihitung dari SISI TERPENDEK video.
+  // Ukuran watermark bisa diatur terpisah untuk portrait dan landscape.
+  sizePercent: {
+    portrait: 30, // lebar watermark, % dari sisi terpendek video portrait
+    landscape: 20, // lebar watermark, % dari sisi terpendek video landscape
+  },
   marginPercent: 5, // jarak dari tepi, % dari sisi terpendek video
   opacity: 0.6, // 0 (transparan) - 1 (solid)
   crf: 18, // kualitas x264, makin kecil makin bagus (18-23 umum)
@@ -240,7 +243,10 @@ async function main() {
   const posTemplate = POSITIONS[CONFIG.position];
   if (!posTemplate) throw new Error(`Posisi tidak valid: ${CONFIG.position}`);
   if (!(CONFIG.opacity >= 0 && CONFIG.opacity <= 1)) throw new Error('opacity harus 0-1');
-  if (!(CONFIG.sizePercent > 0 && CONFIG.sizePercent <= 100)) throw new Error('sizePercent harus 1-100');
+  for (const key of ['portrait', 'landscape']) {
+    const v = CONFIG.sizePercent[key];
+    if (!(v > 0 && v <= 100)) throw new Error(`sizePercent.${key} harus 1-100`);
+  }
 
   // Pastikan folder ada
   for (const dir of [CONFIG.inputDir, CONFIG.watermarkDir, CONFIG.outputDir]) {
@@ -289,7 +295,10 @@ async function main() {
       try {
         const { width, height } = await probeSize(inFile);
         const base = Math.min(width, height); // portrait -> lebar, landscape -> tinggi
-        const wmWidth = Math.max(2, Math.round((base * CONFIG.sizePercent) / 100));
+        const orientation = height > width ? 'portrait' : 'landscape';
+        const sizePercent = CONFIG.sizePercent[orientation];
+        const wmWidth = Math.max(2, Math.round((base * sizePercent) / 100));
+        console.log(`  orientasi: ${orientation}, ukuran watermark: ${sizePercent}%`);
         const margin = Math.round((base * CONFIG.marginPercent) / 100);
         const pos = posTemplate.replaceAll('{m}', String(margin));
 
