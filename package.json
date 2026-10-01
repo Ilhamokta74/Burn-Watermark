@@ -1,0 +1,12 @@
+{
+  "name": "video-watermark",
+  "version": "1.0.0",
+  "private": true,
+  "main": "watermark.js",
+  "scripts": {
+    "start": "node watermark"
+  },
+  "dependencies": {
+    "sharp": "^0.34.0"
+  }
+}
